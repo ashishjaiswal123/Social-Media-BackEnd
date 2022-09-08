@@ -1,4 +1,4 @@
-import UserModel from "../Models/userModels.js";
+import UserModel from "../Models/userModel.js";
 import bcrypt from "bcrypt";
 
 // Registering a new user
