@@ -1,53 +1,62 @@
 import UserModel from "../Models/userModel.js";
 import bcrypt from "bcrypt"
+import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 // Get a user 
 export const getUser = async (req, res) => {
-    const id = req.params.id
-
+    const id = req.params.id;
+  
     try {
-        const user = await UserModel.findById(id)
-
-        if(user){
-            const {password, ...otherDetails} = user._doc
-
-            res.status(200).json(otherDetails)
-        }
-        else{
-            res.status(404).json("No such user exists")
-        }
+      const user = await UserModel.findById(id);
+      if (user) {
+        const { password, ...otherDetails } = user._doc;
+  
+        res.status(200).json(otherDetails);
+      } else {
+        res.status(404).json("No such User");
+      }
     } catch (error) {
-        res.status(500).json(error)
+      res.status(500).json(error);
     }
-}
+  };
 
 // Update a user
 export const updateUser = async (req, res) => {
-    const id = req.params.id
+    const id = req.params.id;
+    // console.log("Data Received", req.body)
+    const { _id, currentUserAdmin, password } = req.body;
 
-    const {currentUserId, currentUserAdminStatus, password} = req.body
-
-    if(id === currentUserId || currentUserAdminStatus){
-        try {
-
-            if(password){
-                const salt = await bcrypt.genSalt(10)
-                req.body.password = await bcrypt.hash(password, salt)
-            }
-
-            const user = await UserModel.findByIdAndUpdate(id, req.body, {new: true})
-
-            res.status(200).json(user)
-            console.log("updated successfully")
-        } catch (error) {
-            res.status(500).json(error)
+    if (id === _id) {
+      try {
+        // if we also have to update password then password will be bcrypted again
+        if (password) {
+          const salt = await bcrypt.genSalt(10);
+          req.body.password = await bcrypt.hash(password, salt);
         }
+        // have to change this
+        const user = await UserModel.findByIdAndUpdate(id, req.body, {
+          new: true,
+        });
+        // const token = jwt.sign(
+        //   { username: user.username, id: user._id },
+        //   process.env.JWTKEY,
+        //   { expiresIn: "1h" }
+        // );
+        // console.log({user, token})
+        res.status(200).json({user});
+      } catch (error) {
+        console.log(error)
+        console.log("Error while updating")
+        res.status(500).json(error);
+      }
+    } else {
+      res
+        .status(403)
+        .json("Access Denied! You can update only your own Account.");
     }
-    else{
-        res.status(403).json("Access Denied! you can only update your own profile")
-    }
-}
-
+  };
+  
 // Delete a user
 export const deleteUser = async (req, res) => {
     const id = req.params.id
